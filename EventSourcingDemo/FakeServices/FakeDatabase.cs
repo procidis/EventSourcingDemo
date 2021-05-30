@@ -13,19 +13,28 @@ namespace EventSourcingDemo.FakeServices
         public virtual T SaveData<T>(T data) where T : DomainModelBase
         {
             var dataset = GetDataSet<T>();
-            int id;
             if (!dataset.TryGetValue(data.Id, out var existingData))
             {
-                id = dataset.Values.Count > 0 ? dataset.Keys.LastOrDefault() + 1 : 1;
-                data.Id = id;
-                dataset.Add(id, data);
-                return data;
+                return InsertNewItem(data, dataset);
             }
 
-            id = (existingData as DomainModelBase).Id;
+            return UpdateItem(data, dataset, existingData);
+        }
+
+        private static T UpdateItem<T>(T data, Dictionary<int, object> dataset, object existingData) where T : DomainModelBase
+        {
+            var id = (existingData as DomainModelBase).Id;
             dataset.Remove(id);
             data.Id = id;
             dataset.Add(data.Id, data);
+            return data;
+        }
+
+        private static T InsertNewItem<T>(T data, Dictionary<int, object> dataset) where T : DomainModelBase
+        {
+            var id = dataset.Values.Count > 0 ? dataset.Keys.LastOrDefault() + 1 : 1;
+            data.Id = id;
+            dataset.Add(id, data);
             return data;
         }
 
